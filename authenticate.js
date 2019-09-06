@@ -6,9 +6,9 @@ const auth = require('basic-auth');
 
 const { User } = models;
 
-// U S E R   A U T H E N T I C A T I O N   M I D D L E W A R E 
-const authenticateUser = (req, res, next ) => {
 
+const authenticateUser = (req, res, next ) => {
+    // Parse the user's credentials from the Authorization header.
     const credentials = auth(req);
   
     if (credentials) {
@@ -18,10 +18,18 @@ const authenticateUser = (req, res, next ) => {
             emailAddress : credentials.name
           }
         }).then(user => {
+            // if user is found compare password "key" 
           if (user) {
-            if ( bcryptjs.compareSync(credentials.pass, user.password)) {
+            const authenticated = bcryptjs.compareSync(credentials.pass, user.password);
+
+            if (authenticated) {
               console.log(`Authentication successful for user with email Address: ${user.emailAddress}`);
-               users = user;
+ 
+              if (req.originalUrl.includes('courses')) {
+                req.body.userId = user.id;
+            } else if (req.originalUrl.includes('users')) {
+                req.body.id = user.id;
+            }
                next();
             } else {
               console.log(`Authentication failure for user with email Address: ${user.emailAddress}`);
@@ -38,8 +46,5 @@ const authenticateUser = (req, res, next ) => {
       }
   }
 
- module.exports = authenticateUser
-
-
-
+  module.exports = authenticateUser
   
